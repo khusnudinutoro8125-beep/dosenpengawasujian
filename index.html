@@ -63,13 +63,13 @@
 
     <script>
         // MASUKKAN URL DEPLOYMENT BARU DI SINI
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbxhQA4vGx62CjVemktj134HCWkUozZGSBgYuTWxEns713Fj9CGcfE_XO1VdbeTmDeUn/exec"; 
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbxOOSsDboxr2YM0iWbsTQJ1nFh_f97-EuRc3b4f4Nr66owsw62ecs-JgEbeNL77V3wH/exec"; 
         let jumlahPelanggaranTerakhir = 0;
 
         function formatTanggal(dateString) { return dateString ? dateString : "-"; }
 
         async function ambilData() {
-            if (GAS_URL === "https://script.google.com/macros/s/AKfycbxhQA4vGx62CjVemktj134HCWkUozZGSBgYuTWxEns713Fj9CGcfE_XO1VdbeTmDeUn/exec") {
+            if (GAS_URL === "https://script.google.com/macros/s/AKfycbxOOSsDboxr2YM0iWbsTQJ1nFh_f97-EuRc3b4f4Nr66owsw62ecs-JgEbeNL77V3wH/exec") {
                 document.getElementById('connection-status').textContent = "Error: URL GAS belum diatur";
                 document.getElementById('connection-status').style.color = "var(--danger)";
                 return;
