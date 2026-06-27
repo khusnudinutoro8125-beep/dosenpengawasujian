@@ -3,21 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Pengawasan Ujian</title>
+    <title>Dashboard Pengawasan</title>
     <style>
-        :root {
-            --bg: #f3f4f6;
-            --surface: #ffffff;
-            --text: #1f2937;
-            --border: #e5e7eb;
-            --danger: #ef4444;
-            --success: #10b981;
-            --primary: #2563eb;
-        }
+        :root { --bg: #f3f4f6; --surface: #ffffff; --text: #1f2937; --border: #e5e7eb; --danger: #ef4444; --success: #10b981; --warning: #f59e0b; --primary: #2563eb; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg); color: var(--text); padding: 20px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: var(--surface); padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .status-bar { font-size: 14px; color: #6b7280; }
         .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         @media (max-width: 768px) { .grid-container { grid-template-columns: 1fr; } }
         .card { background: var(--surface); padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); max-height: 80vh; overflow-y: auto; }
@@ -25,116 +16,59 @@
         .card.alert h2 { border-bottom-color: var(--danger); color: var(--danger); }
         table { width: 100%; border-collapse: collapse; font-size: 14px; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border); }
-        th { background-color: #f9fafb; position: sticky; top: 0; }
+        th { background: #f9fafb; position: sticky; top: 0; }
         .badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; color: white; display: inline-block; }
-        .badge.danger { background: var(--danger); }
-        .badge.success { background: var(--success); }
-        @keyframes flashRed { 0% { background-color: var(--danger); color: white; } 100% { background-color: transparent; color: inherit; } }
+        .badge.danger { background: var(--danger); } .badge.success { background: var(--success); } .badge.warning { background: var(--warning); }
+        @keyframes flashRed { 0% { background: var(--danger); color: white; } 100% { background: transparent; color: inherit; } }
         .new-violation { animation: flashRed 2s ease-out; }
     </style>
 </head>
 <body>
     <div class="header">
-        <div>
-            <h1>Dashboard Pengawasan</h1>
-            <p>Mata Kuliah: Kewarganegaraan</p>
-        </div>
-        <div class="status-bar">
-            Pembaruan terakhir: <span id="last-update">-</span><br>
-            Status Koneksi: <span id="connection-status" style="color: var(--primary); font-weight: bold;">Menghubungkan...</span>
-        </div>
+        <div><h1>Dashboard Pengawasan</h1><p>Mata Kuliah: Kewarganegaraan</p></div>
+        <div style="font-size: 14px; color: #6b7280;">Update: <span id="last-update">-</span><br><span id="connection-status" style="color: var(--primary); font-weight: bold;">Menghubungkan...</span></div>
     </div>
     <div class="grid-container">
         <div class="card alert">
-            <h2>Log Pelanggaran (Real-time)</h2>
-            <table>
-                <thead><tr><th>Waktu</th><th>NIM</th><th>Nama</th><th>Aktivitas</th></tr></thead>
-                <tbody id="table-pengawasan"><tr><td colspan="4" style="text-align: center;">Memuat data...</td></tr></tbody>
-            </table>
+            <h2>Log Pelanggaran</h2>
+            <table><thead><tr><th>Waktu</th><th>NIM</th><th>Nama</th><th>Aktivitas</th></tr></thead><tbody id="table-pengawasan"></tbody></table>
         </div>
         <div class="card">
-            <h2>Daftar Pengumpulan Ujian</h2>
-            <table>
-                <thead><tr><th>Waktu Kumpul</th><th>NIM</th><th>Nama</th><th>Status</th></tr></thead>
-                <tbody id="table-jawaban"><tr><td colspan="4" style="text-align: center;">Memuat data...</td></tr></tbody>
-            </table>
+            <h2>Daftar Pengumpulan</h2>
+            <table><thead><tr><th>Waktu Kumpul</th><th>NIM</th><th>Nama</th><th>Status</th></tr></thead><tbody id="table-jawaban"></tbody></table>
         </div>
     </div>
 
     <script>
-        // MASUKKAN URL DEPLOYMENT BARU DI SINI
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbxOOSsDboxr2YM0iWbsTQJ1nFh_f97-EuRc3b4f4Nr66owsw62ecs-JgEbeNL77V3wH/exec"; 
-        let jumlahPelanggaranTerakhir = 0;
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbyyNnXYa50NOtcYJ2eTgUFxR97cX60c33BvRKfKZI_ByUPTtBa9vrz5jVbgpfX1qwzb/exec"; 
+        let lastViolations = 0;
 
-        function formatTanggal(dateString) { return dateString ? dateString : "-"; }
-
-        async function ambilData() {
-            if (GAS_URL === "https://script.google.com/macros/s/AKfycbxOOSsDboxr2YM0iWbsTQJ1nFh_f97-EuRc3b4f4Nr66owsw62ecs-JgEbeNL77V3wH/exec") {
-                document.getElementById('connection-status').textContent = "Error: URL GAS belum diatur";
-                document.getElementById('connection-status').style.color = "var(--danger)";
-                return;
-            }
+        async function fetchDashboard() {
+            if (GAS_URL === "https://script.google.com/macros/s/AKfycbyyNnXYa50NOtcYJ2eTgUFxR97cX60c33BvRKfKZI_ByUPTtBa9vrz5jVbgpfX1qwzb/exec") { document.getElementById('connection-status').textContent = "URL Belum Diatur"; return; }
             try {
-                const urlAntiCache = GAS_URL + (GAS_URL.includes('?') ? '&' : '?') + 'nocache=' + new Date().getTime();
-                const response = await fetch(urlAntiCache, { method: 'GET', redirect: 'follow' });
-                if (!response.ok) throw new Error("Respon jaringan tidak ok");
-                const data = await response.json();
+                const res = await fetch(GAS_URL + "?nocache=" + new Date().getTime());
+                const data = await res.json();
                 
-                renderTabelJawaban(data.jawaban);
-                renderTabelPengawasan(data.pengawasan);
-                
+                const tbJwb = document.getElementById('table-jawaban'); tbJwb.innerHTML = '';
+                data.jawaban.slice().reverse().forEach(row => {
+                    let status = row[3] ? row[3].trim() : "Unknown";
+                    let badge = status === 'Selesai' ? 'badge success' : 'badge warning';
+                    tbJwb.insertAdjacentHTML('beforeend', `<tr><td>${row[0]||"-"}</td><td>${row[1]}</td><td>${row[2]}</td><td><span class="${badge}">${status}</span></td></tr>`);
+                });
+
+                const tbPel = document.getElementById('table-pengawasan'); tbPel.innerHTML = '';
+                let isNew = data.pengawasan.length > lastViolations && lastViolations !== 0; lastViolations = data.pengawasan.length;
+                data.pengawasan.slice().reverse().forEach((row, i) => {
+                    tbPel.insertAdjacentHTML('beforeend', `<tr class="${i===0 && isNew ? 'new-violation':''}"><td>${row[0]||"-"}</td><td>${row[1]}</td><td>${row[2]}</td><td><span class="badge danger">${row[3]}</span></td></tr>`);
+                });
+
                 document.getElementById('last-update').textContent = new Date().toLocaleTimeString('id-ID');
-                document.getElementById('connection-status').textContent = "Terhubung (Auto-refresh aktif)";
-                document.getElementById('connection-status').style.color = "var(--success)";
-            } catch (error) {
-                console.error(error);
-                document.getElementById('connection-status').textContent = "Terputus. Mencoba ulang...";
-                document.getElementById('connection-status').style.color = "var(--danger)";
+                document.getElementById('connection-status').textContent = "Terhubung"; document.getElementById('connection-status').style.color = "var(--success)";
+            } catch (e) {
+                document.getElementById('connection-status').textContent = "Terputus"; document.getElementById('connection-status').style.color = "var(--danger)";
             }
         }
-
-        function renderTabelJawaban(data) {
-            const tbody = document.getElementById('table-jawaban');
-            tbody.innerHTML = '';
-            if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Belum ada jawaban masuk</td></tr>';
-                return;
-            }
-            data.slice().reverse().forEach(row => {
-                const tr = document.createElement('tr');
-                let statusKumpul = row[3] ? row[3].trim() : "Tidak Diketahui";
-                let statusBadge = (statusKumpul === 'Selesai') ? 'badge success' : 'badge danger';
-                
-                tr.innerHTML = `
-                    <td>${formatTanggal(row[0])}</td>
-                    <td>${row[1]}</td>
-                    <td>${row[2]}</td>
-                    <td><span class="${statusBadge}">${statusKumpul}</span></td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function renderTabelPengawasan(data) {
-            const tbody = document.getElementById('table-pengawasan');
-            if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Tidak ada data pelanggaran</td></tr>';
-                return;
-            }
-            tbody.innerHTML = '';
-            const adaPelanggaranBaru = (data.length > jumlahPelanggaranTerakhir && jumlahPelanggaranTerakhir !== 0);
-            jumlahPelanggaranTerakhir = data.length;
-
-            data.slice().reverse().forEach((row, index) => {
-                const tr = document.createElement('tr');
-                if (index === 0 && adaPelanggaranBaru) tr.classList.add('new-violation');
-                tr.innerHTML = `<td>${formatTanggal(row[0])}</td><td>${row[1]}</td><td>${row[2]}</td><td><span class="badge danger">${row[3]}</span></td>`;
-                tbody.appendChild(tr);
-            });
-        }
-
-        ambilData();
-        setInterval(ambilData, 10000);
+        fetchDashboard(); setInterval(fetchDashboard, 10000);
     </script>
 </body>
 </html>
