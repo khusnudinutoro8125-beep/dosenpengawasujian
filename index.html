@@ -152,12 +152,11 @@
     </div>
 
     <script>
-        // WAJIB GANTI URL DI BAWAH INI DENGAN URL WEB APP GAS ANDA
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbxtWGh-eVEgzeOg2sJ5YvsLrz9AKd3MnnVMlFwT5rtmu5kaUrciILuKULIcPIcLbSA/exec"; 
+        // WAJIB GANTI URL DI BAWAH INI DENGAN URL WEB APP GAS ANDA YANG BARU
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwhWV2oDXpNnkX8M8MyEAaQ9f3YFajWa219Iav0xmu6jlvfV8q3dH4AHdTfwCCzZT9q/exec"; 
         
         let jumlahPelanggaranTerakhir = 0;
 
-        // Fungsi dikembalikan menjadi sederhana, langsung merender data teks dari spreadsheet
         function formatTanggal(dateString) {
             if (!dateString) return "-";
             return dateString; 
@@ -208,13 +207,16 @@
 
             data.slice().reverse().forEach(row => {
                 const tr = document.createElement('tr');
-                const statusBadge = row[8] === 'Manual' ? 'badge success' : 'badge primary';
+                
+                // PENTING: Penyesuaian indeks karena perubahan struktur Spreadsheet
+                // Indeks 0 = Waktu, 1 = NIM, 2 = Nama, 3 = Status
+                const statusBadge = row[3] === 'Manual' ? 'badge success' : 'badge primary';
                 
                 tr.innerHTML = `
                     <td>${formatTanggal(row[0])}</td>
                     <td>${row[1]}</td>
                     <td>${row[2]}</td>
-                    <td><span class="${statusBadge}">${row[8]}</span></td>
+                    <td><span class="${statusBadge}">${row[3] || "-"}</span></td>
                 `;
                 tbody.appendChild(tr);
             });
