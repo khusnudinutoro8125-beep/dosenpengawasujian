@@ -89,11 +89,13 @@
             font-size: 12px;
             font-weight: bold;
             color: white;
+            display: inline-block;
         }
 
         .badge.danger { background: var(--danger); }
         .badge.success { background: var(--success); }
         .badge.primary { background: var(--primary); }
+        .badge.warning { background: #f59e0b; }
 
         @keyframes flashRed {
             0% { background-color: var(--danger); color: white; }
@@ -208,15 +210,22 @@
             data.slice().reverse().forEach(row => {
                 const tr = document.createElement('tr');
                 
-                // PENTING: Penyesuaian indeks karena perubahan struktur Spreadsheet
-                // Indeks 0 = Waktu, 1 = NIM, 2 = Nama, 3 = Status
-                const statusBadge = row[3] === 'Manual' ? 'badge success' : 'badge primary';
+                // Penyesuaian Indeks Fix: 
+                // Indeks 0 = Waktu, 1 = NIM, 2 = Nama, 3 = Status Kumpul
+                let statusKumpul = row[3] ? row[3].trim() : "Tidak Diketahui";
+                
+                let statusBadge = 'badge primary';
+                if (statusKumpul === 'Manual') {
+                    statusBadge = 'badge success';
+                } else if (statusKumpul === 'Waktu Habis') {
+                    statusBadge = 'badge warning';
+                }
                 
                 tr.innerHTML = `
                     <td>${formatTanggal(row[0])}</td>
                     <td>${row[1]}</td>
                     <td>${row[2]}</td>
-                    <td><span class="${statusBadge}">${row[3] || "-"}</span></td>
+                    <td><span class="${statusBadge}">${statusKumpul}</span></td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -242,6 +251,7 @@
                     tr.classList.add('new-violation');
                 }
 
+                // Indeks sheet pengawasan: 0 = Waktu, 1 = NIM, 2 = Nama, 3 = Jenis Pelanggaran
                 tr.innerHTML = `
                     <td>${formatTanggal(row[0])}</td>
                     <td>${row[1]}</td>
